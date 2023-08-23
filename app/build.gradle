@@ -12,6 +12,8 @@ plugins {
     id 'org.openjfx.javafxplugin' version '0.0.8'
 }
 
+compileJava.options.encoding = 'UTF-8'
+
 javafx {
  version = '12'
  modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.web' ]
@@ -40,7 +42,7 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = 'grafik.App'
+    mainClass = 'com.transferarbeit.MainApp'
 }
 
 tasks.named('test') {

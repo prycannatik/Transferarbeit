@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.transferarbeit.GUIController"
+      spacing="10">
+
+    <HBox spacing="10">
+        <Button text="Datei auswählen" onAction="#handleChooseFileAction"/>
+        <Label fx:id="selectedFileLabel" text="Keine Datei ausgewählt"/>
+        <Button text="Auswahl löschen" onAction="#handleDeleteFileAction"/>
+    </HBox>
+
+    <HBox spacing="10">
+        <Button text="Komprimieren" onAction="#handleCompressAction"/>
+        <Button text="Dekomprimieren" onAction="#handleDecompressAction"/>
+    </HBox>
+
+    <TextArea fx:id="statusTextArea" editable="false" prefHeight="100"/>
+
+</VBox>
