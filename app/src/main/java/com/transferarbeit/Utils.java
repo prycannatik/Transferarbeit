@@ -19,13 +19,6 @@ public class Utils {
     }
 
     public static String decompressText(String compressedText, Map<String, String> dictionary) {
-        for (Map.Entry<String, String> entry : dictionary.entrySet()) {
-            String word = entry.getKey();
-            String code = entry.getValue();
-            Pattern pattern = Pattern.compile("\\b" + Pattern.quote(code) + "\\b");
-            Matcher matcher = pattern.matcher(compressedText);
-            compressedText = matcher.replaceAll(word);
-        }
         return compressedText;
     }
 
