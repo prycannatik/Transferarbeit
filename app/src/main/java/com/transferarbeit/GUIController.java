@@ -1,14 +1,14 @@
 package com.transferarbeit;
 
-import com.transferarbeit.CompressionService;
-import com.transferarbeit.DictionaryBuilder;
-import com.transferarbeit.FileService;
-import com.transferarbeit.Utils;
+import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextArea;
+import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 
 import java.io.File;
@@ -34,6 +34,12 @@ public class GUIController {
     @FXML
     private TextArea statusTextArea;
 
+    @FXML
+    private Text deleteFileIcon;
+
+    @FXML
+    private ProgressBar compressionRateBar;
+
     private File selectedFile;
     private Map<String, String> dictionary;
 
@@ -43,58 +49,132 @@ public class GUIController {
         fileChooser.setTitle("Wählen Sie eine Datei aus");
         selectedFile = fileChooser.showOpenDialog(null);
         if (selectedFile != null) {
-            selectedFileLabel.setText(selectedFile.getName());
-            statusTextArea.setText("Datei ausgewählt: " + selectedFile.getName());
+            updateSelectedFile(selectedFile.getName());
+            updateStatusText("Datei ausgewählt: " + selectedFile.getName());
+
+            boolean isCompressed = Utils.isCompressed(selectedFile);
+            compressButton.setDisable(isCompressed);
+            decompressButton.setDisable(!isCompressed);
         } else {
-            statusTextArea.setText("Keine Datei ausgewählt.");
+            updateStatusText("Keine Datei ausgewählt.");
         }
     }
 
     @FXML
     public void handleCompressAction(ActionEvent event) {
         if (selectedFile == null) {
-            statusTextArea.setText("Bitte zuerst eine Datei auswählen.");
+            updateStatusText("Bitte zuerst eine Datei auswählen.");
             return;
         }
+        compressButton.setDisable(true);
+        decompressButton.setDisable(true);
+        deleteFileIcon.setVisible(false);
+        chooseFileButton.setDisable(true);
 
-        try {
-            String text = FileService.readFile(selectedFile);
-            dictionary = DictionaryBuilder.buildDictionary(selectedFile);
-            String compressedText = Utils.compressText(text, dictionary);
-            File outputFile = new File(selectedFile.getParent(), "compressed_" + selectedFile.getName());
-            FileService.writeCompressedFile(outputFile, dictionary, compressedText);
-            statusTextArea.setText("Datei erfolgreich komprimiert: " + outputFile.getAbsolutePath());
-        } catch (Exception e) {
-            statusTextArea.setText("Fehler beim Komprimieren: " + e.getMessage());
-        }
+        Task<Void> compressionTask = createCompressionTask();
+        compressionRateBar.progressProperty().bind(compressionTask.progressProperty());
+
+        Thread compressionThread = new Thread(compressionTask);
+        compressionThread.setDaemon(true);
+        compressionThread.start();
     }
 
     @FXML
     public void handleDecompressAction(ActionEvent event) {
         if (selectedFile == null) {
-            statusTextArea.setText("Bitte zuerst eine Datei auswählen.");
+            updateStatusText("Bitte zuerst eine Datei auswählen.");
             return;
         }
+        decompressButton.setDisable(true);
+        compressButton.setDisable(true);
+        deleteFileIcon.setVisible(false);
+        chooseFileButton.setDisable(true);
 
-        try {
-            String compressedText = FileService.readFile(selectedFile);
-            String decompressedText = Utils.decompressText(compressedText, dictionary);
-            File outputFile = new File(selectedFile.getParent(), "decompressed_" + selectedFile.getName());
-            FileService.writeCompressedFile(outputFile, dictionary, decompressedText); // Hier könnten Sie eine separate Methode zum Schreiben von reinem Text verwenden
-            statusTextArea.setText("Datei erfolgreich dekomprimiert: " + outputFile.getAbsolutePath());
-        } catch (Exception e) {
-            statusTextArea.setText("Fehler beim Dekomprimieren: " + e.getMessage());
-        }
+        Task<Void> decompressionTask = createDecompressionTask();
+        compressionRateBar.progressProperty().bind(decompressionTask.progressProperty());
+
+        Thread decompressionThread = new Thread(decompressionTask);
+        decompressionThread.setDaemon(true);
+        decompressionThread.start();
     }
 
     @FXML
-    public void handleDeleteFileAction(ActionEvent event) {
+    public void handleDeleteFileAction() {
         if (selectedFile != null) {
-            selectedFile = null;
-            selectedFileLabel.setText("Keine Datei ausgewählt");
-            statusTextArea.setText("Dateiauswahl zurückgesetzt.");
+            resetSelectedFile();
+            updateStatusText("Dateiauswahl zurückgesetzt.");
         } else {
-            statusTextArea.setText("Keine Datei zum Zurücksetzen ausgewählt.");
+            updateStatusText("Keine Datei zum Zurücksetzen ausgewählt.");
         }
+    }
+
+    private Task<Void> createCompressionTask() {
+        return new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                try {
+                    String text = FileService.readFile(selectedFile);
+                    dictionary = DictionaryBuilder.buildDictionary(selectedFile);
+                    String compressedText = Utils.compressText(text, dictionary);
+                    File outputFile = new File(selectedFile.getParent(), "compressed_" + selectedFile.getName());
+                    FileService.writeCompressedFile(outputFile, dictionary, compressedText);
+
+                    updateStatusText("Datei erfolgreich komprimiert: " + outputFile.getAbsolutePath());
+
+                    updateProgress(0, 1);
+                    Platform.runLater(() -> resetSelectedFile());
+
+                } catch (Exception e) {
+                    Platform.runLater(() -> updateStatusText("Fehler beim Komprimieren: " + e.getMessage()));
+                }
+                return null;
+            }
+        };
+    }
+
+    private Task<Void> createDecompressionTask() {
+        return new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                try {
+                    String compressedText = FileService.readFile(selectedFile);
+
+                    String decompressedText = Utils.decompressText(compressedText, dictionary);
+                    String fileName = selectedFile.getName();
+                    String fileNameWithoutCompressed = fileName.substring(11);
+                    File outputFile = new File(selectedFile.getParent(), "decompressed_" + fileNameWithoutCompressed);
+                    FileService.writeDecompressedFile(outputFile, decompressedText);
+
+                    updateProgress(0, 1);
+
+                    Platform.runLater(() -> {
+                        updateStatusText("Datei erfolgreich dekomprimiert: " + outputFile.getAbsolutePath());
+                        resetSelectedFile();
+                    });
+
+                } catch (Exception e) {
+                    Platform.runLater(() -> updateStatusText("Fehler beim Dekomprimieren: " + e.getMessage()));
+                }
+                return null;
+            }
+        };
+    }
+
+    private void updateSelectedFile(String filename) {
+        selectedFileLabel.setText(filename);
+        deleteFileIcon.setVisible(true);
+    }
+
+    private void resetSelectedFile() {
+        selectedFile = null;
+        selectedFileLabel.setText("Keine Datei ausgewählt");
+        deleteFileIcon.setVisible(false);
+        compressButton.setDisable(true);
+        decompressButton.setDisable(true);
+        chooseFileButton.setDisable(false);
+    }
+
+    private void updateStatusText(String message) {
+        statusTextArea.setText(message);
     }
 }

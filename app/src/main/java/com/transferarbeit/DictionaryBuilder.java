@@ -26,8 +26,14 @@ public class DictionaryBuilder {
         sortedWords.sort((e1, e2) -> e2.getValue().compareTo(e1.getValue()));
 
         Map<String, String> dictionary = new LinkedHashMap<>();
-        for (int i = 0; i < Math.min(MAX_DICTIONARY_SIZE, sortedWords.size()); i++) {
-            dictionary.put(sortedWords.get(i).getKey(), "%" + (i + 1));
+        int keyIndex = 0;
+
+        for (int i = 0; i < sortedWords.size() && dictionary.size() < MAX_DICTIONARY_SIZE; i++) {
+            String word = sortedWords.get(i).getKey();
+            if (word.length() > ("%" + (keyIndex + 1)).length()) {
+                dictionary.put(word, "%" + (keyIndex + 1));
+                keyIndex++;
+            }
         }
 
         return dictionary;
