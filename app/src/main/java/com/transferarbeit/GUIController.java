@@ -10,6 +10,7 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextArea;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
+import java.awt.Desktop;
 
 import java.io.File;
 import java.util.Map;
@@ -123,6 +124,7 @@ public class GUIController {
 
                     updateProgress(0, 1);
                     Platform.runLater(() -> resetSelectedFile());
+                    Desktop.getDesktop().open(outputFile.getParentFile());
 
                 } catch (Exception e) {
                     Platform.runLater(() -> updateStatusText("Fehler beim Komprimieren: " + e.getMessage()));
@@ -151,6 +153,8 @@ public class GUIController {
                         updateStatusText("Datei erfolgreich dekomprimiert: " + outputFile.getAbsolutePath());
                         resetSelectedFile();
                     });
+
+                    Desktop.getDesktop().open(outputFile.getParentFile());
 
                 } catch (Exception e) {
                     Platform.runLater(() -> updateStatusText("Fehler beim Dekomprimieren: " + e.getMessage()));
