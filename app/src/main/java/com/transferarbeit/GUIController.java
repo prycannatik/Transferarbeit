@@ -119,13 +119,22 @@ public class GUIController {
                     String compressedText = Utils.compressText(text, dictionary);
                     File outputFile = new File(selectedFile.getParent(), "compressed_" + selectedFile.getName());
                     FileService.writeCompressedFile(outputFile, dictionary, compressedText);
-
-                    updateStatusText("Datei erfolgreich komprimiert: " + outputFile.getAbsolutePath());
-
+    
+                    long originalFileSize = selectedFile.length();
+                    long compressedFileSize = outputFile.length();
+                    double compressionRate = (1 - (double) compressedFileSize / originalFileSize) * 100;
+                    double originalSizeMB = originalFileSize / (1024.0 * 1024.0);
+                    double compressedSizeMB = compressedFileSize / (1024.0 * 1024.0);
+    
+                    updateStatusText("Datei erfolgreich komprimiert: " + outputFile.getAbsolutePath() +
+                                     "\n\nKomprimierungsrate: " + String.format("%.2f%%", compressionRate) +
+                                     "\nUrsprüngliche Größe: " + String.format("%.2f MB", originalSizeMB) +
+                                     "\nKomprimierte Größe: " + String.format("%.2f MB", compressedSizeMB));
+    
                     updateProgress(0, 1);
                     Platform.runLater(() -> resetSelectedFile());
                     Desktop.getDesktop().open(outputFile.getParentFile());
-
+    
                 } catch (Exception e) {
                     Platform.runLater(() -> updateStatusText("Fehler beim Komprimieren: " + e.getMessage()));
                 }
@@ -133,6 +142,7 @@ public class GUIController {
             }
         };
     }
+    
 
     private Task<Void> createDecompressionTask() {
         return new Task<Void>() {
