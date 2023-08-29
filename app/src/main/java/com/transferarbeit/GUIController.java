@@ -139,7 +139,7 @@ public class GUIController {
                 try {
                     String compressedText = FileService.readFile(selectedFile);
 
-                    String decompressedText = Utils.decompressText(compressedText, dictionary);
+                    String decompressedText = Utils.decompressText(compressedText);
                     String fileName = selectedFile.getName();
                     String fileNameWithoutCompressed = fileName.substring(11);
                     File outputFile = new File(selectedFile.getParent(), "decompressed_" + fileNameWithoutCompressed);
