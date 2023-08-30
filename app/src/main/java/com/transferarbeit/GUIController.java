@@ -17,7 +17,6 @@ import java.util.Map;
 
 public class GUIController {
 
-    // Define UI elements from the FXML file
     @FXML
     private Button compressButton;
     @FXML
@@ -33,21 +32,19 @@ public class GUIController {
     @FXML
     private Text deleteFileIcon;
     @FXML
-    private ProgressBar compressionRateBar;
+    private ProgressBar progressBar;
 
-    // Define variables to hold selected file and dictionary
     private File selectedFile;
     private Map<String, String> dictionary;
 
-    // Handler for choosing a file
     @FXML
-    public void handleChooseFileAction(ActionEvent event) {
+    public void btnChooseFileAction(ActionEvent event) {
         // Create a file chooser dialog
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Wählen Sie eine Datei aus");
         selectedFile = fileChooser.showOpenDialog(null);
 
-        // Update UI based on selected file
+        // Update UI
         if (selectedFile != null) {
             updateSelectedFile(selectedFile.getName());
             updateStatusText("Datei ausgewählt: " + selectedFile.getName());
@@ -61,33 +58,28 @@ public class GUIController {
         }
     }
 
-    // Handler for compressing a file
     @FXML
-    public void handleCompressAction(ActionEvent event) {
-        // Check if a file is selected
+    public void btnCompressAction(ActionEvent event) {
         if (selectedFile == null) {
             updateStatusText("Bitte zuerst eine Datei auswählen.");
             return;
         }
-
         // Disable buttons during compression
         compressButton.setDisable(true);
         decompressButton.setDisable(true);
         deleteFileIcon.setVisible(false);
         chooseFileButton.setDisable(true);
 
-        // Create and start a new compression task
+        // Create and start a new compression
         Task<Void> compressionTask = createCompressionTask();
-        compressionRateBar.progressProperty().bind(compressionTask.progressProperty());
+        progressBar.progressProperty().bind(compressionTask.progressProperty());
         Thread compressionThread = new Thread(compressionTask);
         compressionThread.setDaemon(true);
         compressionThread.start();
     }
 
-    // Handler for decompressing a file
     @FXML
-    public void handleDecompressAction(ActionEvent event) {
-        // Check if a file is selected
+    public void btnDecompressAction(ActionEvent event) {
         if (selectedFile == null) {
             updateStatusText("Bitte zuerst eine Datei auswählen.");
             return;
@@ -99,17 +91,16 @@ public class GUIController {
         deleteFileIcon.setVisible(false);
         chooseFileButton.setDisable(true);
 
-        // Create and start a new decompression task
+        // Create and start a new decompression
         Task<Void> decompressionTask = createDecompressionTask();
-        compressionRateBar.progressProperty().bind(decompressionTask.progressProperty());
+        progressBar.progressProperty().bind(decompressionTask.progressProperty());
         Thread decompressionThread = new Thread(decompressionTask);
         decompressionThread.setDaemon(true);
         decompressionThread.start();
     }
 
-    // Handler for deleting the selected file
     @FXML
-    public void handleDeleteFileAction() {
+    public void btnDeleteFileAction() {
         // Check if a file is selected and reset if yes
         if (selectedFile != null) {
             resetSelectedFile();
@@ -119,13 +110,11 @@ public class GUIController {
         }
     }
 
-    // Task for compressing a file
     private Task<Void> createCompressionTask() {
         return new Task<Void>() {
             @Override
             protected Void call() throws Exception {
                 try {
-                    // Read the original file content
                     String text = FileService.readFile(selectedFile);
 
                     // Build the dictionary for compression
@@ -133,7 +122,6 @@ public class GUIController {
 
                     // Compress the text using the dictionary
                     String compressedText = Utils.compressText(text, dictionary);
-
                     // Create output file for compressed content
                     File outputFile = new File(selectedFile.getParent(), "compressed_" + selectedFile.getName());
 
@@ -166,13 +154,11 @@ public class GUIController {
         };
     }
 
-    // Task for decompressing a file
     private Task<Void> createDecompressionTask() {
         return new Task<Void>() {
             @Override
             protected Void call() throws Exception {
                 try {
-                    // Read the compressed file content
                     String compressedText = FileService.readFile(selectedFile);
 
                     // Decompress the text using the dictionary
@@ -183,17 +169,15 @@ public class GUIController {
                     String fileNameWithoutCompressed = fileName.substring(11); // Remove 'compressed_' prefix
                     File outputFile = new File(selectedFile.getParent(), "decompressed_" + fileNameWithoutCompressed);
 
-                    // Write the decompressed text to the output file
                     FileService.writeDecompressedFile(outputFile, decompressedText);
 
-                    // Update progress and UI
+                    // Update ui
                     updateProgress(0, 1);
                     Platform.runLater(() -> {
                         updateStatusText("File successfully decompressed: " + outputFile.getAbsolutePath());
                         resetSelectedFile();
                     });
 
-                    // Open the folder containing the output file
                     Desktop.getDesktop().open(outputFile.getParentFile());
 
                 } catch (Exception e) {
@@ -204,13 +188,13 @@ public class GUIController {
         };
     }
 
-    // Update the selected file label
+    // Update label (selected file)
     private void updateSelectedFile(String filename) {
         selectedFileLabel.setText(filename);
         deleteFileIcon.setVisible(true);
     }
 
-    // Reset the selected file and update the UI
+    // Reset selected file
     private void resetSelectedFile() {
         selectedFile = null;
         selectedFileLabel.setText("No file selected");
@@ -220,7 +204,7 @@ public class GUIController {
         chooseFileButton.setDisable(false);
     }
 
-    // Update the status text area
+    // Update the status text
     private void updateStatusText(String message) {
         statusTextArea.setText(message);
     }
