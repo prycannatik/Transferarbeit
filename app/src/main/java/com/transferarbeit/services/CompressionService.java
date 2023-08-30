@@ -1,4 +1,4 @@
-package com.transferarbeit;
+package com.transferarbeit.services;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Utils {
+public class CompressionService {
 
     public static String compressText(String text, Map<String, String> dictionary) {
         for (Map.Entry<String, String> entry : dictionary.entrySet()) {
@@ -87,4 +87,5 @@ public class Utils {
             return false;
         }
     }
+    
 }

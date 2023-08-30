@@ -1,4 +1,4 @@
-package com.transferarbeit;
+package com.transferarbeit.services;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -30,6 +30,7 @@ public class FileService {
                 writer.write(entry.getValue() + "=" + entry.getKey());
                 writer.newLine();
             }
+            // Separator between dictionary and content
             writer.write("---");
             writer.newLine();
             writer.write(compressedText);

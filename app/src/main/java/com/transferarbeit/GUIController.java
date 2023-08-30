@@ -15,6 +15,10 @@ import java.awt.Desktop;
 import java.io.File;
 import java.util.Map;
 
+import com.transferarbeit.services.CompressionService;
+import com.transferarbeit.services.DictionaryBuilderService;
+import com.transferarbeit.services.FileService;
+
 public class GUIController {
 
     @FXML
@@ -50,7 +54,7 @@ public class GUIController {
             updateStatusText("Datei ausgewählt: " + selectedFile.getName());
 
             // Check if the file is compressed and update buttons accordingly
-            boolean isCompressed = Utils.isCompressed(selectedFile);
+            boolean isCompressed = CompressionService.isCompressed(selectedFile);
             compressButton.setDisable(isCompressed);
             decompressButton.setDisable(!isCompressed);
         } else {
@@ -103,7 +107,7 @@ public class GUIController {
     public void btnDeleteFileAction() {
         // Check if a file is selected and reset if yes
         if (selectedFile != null) {
-            resetSelectedFile();
+            resetGUI();
             updateStatusText("Dateiauswahl zurückgesetzt.");
         } else {
             updateStatusText("Keine Datei zum Zurücksetzen ausgewählt.");
@@ -118,14 +122,11 @@ public class GUIController {
                     String text = FileService.readFile(selectedFile);
 
                     // Build the dictionary for compression
-                    dictionary = DictionaryBuilder.buildDictionary(selectedFile);
-
+                    dictionary = DictionaryBuilderService.buildDictionary(selectedFile);
                     // Compress the text using the dictionary
-                    String compressedText = Utils.compressText(text, dictionary);
+                    String compressedText = CompressionService.compressText(text, dictionary);
                     // Create output file for compressed content
                     File outputFile = new File(selectedFile.getParent(), "compressed_" + selectedFile.getName());
-
-                    // Write the compressed text and dictionary to the output file
                     FileService.writeCompressedFile(outputFile, dictionary, compressedText);
 
                     // Calculate and display the compression rate and file sizes
@@ -141,7 +142,7 @@ public class GUIController {
 
                     // Update progress and reset file selection
                     updateProgress(0, 1);
-                    Platform.runLater(() -> resetSelectedFile());
+                    Platform.runLater(() -> resetGUI());
 
                     // Open the folder containing the output file
                     Desktop.getDesktop().open(outputFile.getParentFile());
@@ -162,20 +163,19 @@ public class GUIController {
                     String compressedText = FileService.readFile(selectedFile);
 
                     // Decompress the text using the dictionary
-                    String decompressedText = Utils.decompressText(compressedText);
+                    String decompressedText = CompressionService.decompressText(compressedText);
 
                     // Create an output file for decompressed content
                     String fileName = selectedFile.getName();
                     String fileNameWithoutCompressed = fileName.substring(11); // Remove 'compressed_' prefix
                     File outputFile = new File(selectedFile.getParent(), "decompressed_" + fileNameWithoutCompressed);
-
                     FileService.writeDecompressedFile(outputFile, decompressedText);
 
                     // Update ui
                     updateProgress(0, 1);
                     Platform.runLater(() -> {
                         updateStatusText("File successfully decompressed: " + outputFile.getAbsolutePath());
-                        resetSelectedFile();
+                        resetGUI();
                     });
 
                     Desktop.getDesktop().open(outputFile.getParentFile());
@@ -188,14 +188,13 @@ public class GUIController {
         };
     }
 
-    // Update label (selected file)
+    // Update label (selected file) and make delete icon visible
     private void updateSelectedFile(String filename) {
         selectedFileLabel.setText(filename);
         deleteFileIcon.setVisible(true);
     }
 
-    // Reset selected file
-    private void resetSelectedFile() {
+    private void resetGUI() {
         selectedFile = null;
         selectedFileLabel.setText("No file selected");
         deleteFileIcon.setVisible(false);
@@ -204,7 +203,7 @@ public class GUIController {
         chooseFileButton.setDisable(false);
     }
 
-    // Update the status text
+    // Update the Log status text
     private void updateStatusText(String message) {
         statusTextArea.setText(message);
     }
