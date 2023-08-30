@@ -11,11 +11,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 public class Utils {
 
+    // Compresses the given text using the provided dictionary.
     public static String compressText(String text, Map<String, String> dictionary) {
         for (Map.Entry<String, String> entry : dictionary.entrySet()) {
             String word = entry.getKey();
@@ -27,6 +26,7 @@ public class Utils {
         return text;
     }
 
+    // Decompresses the given compressed text.
     public static String decompressText(String compressedText) {
         // Find the index where the dictionary ends
         int separatorIndex = compressedText.indexOf("---\n");
@@ -34,12 +34,12 @@ public class Utils {
             // No separator found, return the original text
             return compressedText;
         }
-    
-        // Extract the dictionary section and the content section
+
+        // Extract the dictionary and content sections
         String dictionarySection = compressedText.substring(0, separatorIndex);
         String contentSection = compressedText.substring(separatorIndex + 4);
-    
-        // Parse the dictionary section to reconstruct the dictionary
+
+        // Reconstruct the dictionary from the dictionary section
         String[] dictionaryLines = dictionarySection.split("\n");
         Map<String, String> dictionary = new HashMap<>();
         for (String line : dictionaryLines) {
@@ -48,24 +48,24 @@ public class Utils {
                 dictionary.put(keyValue[0], keyValue[1]);
             }
         }
-    
-        // Sort codes by length to avoid partial overlap issues
+
+        // Sort the codes by length to avoid partial overlap issues
         List<String> sortedKeys = new ArrayList<>(dictionary.keySet());
         Collections.sort(sortedKeys, Comparator.comparingInt(String::length).reversed());
-    
+
         // Replace compressed codes with corresponding words
         for (String code : sortedKeys) {
             String word = dictionary.get(code);
             contentSection = contentSection.replace(code, word);
         }
-    
+
         return contentSection;
     }
-    
 
+    // Determines if the file is compressed by looking for a dictionary section.
     public static boolean isCompressed(File file) {
         try {
-            // Liest den Inhalt der Datei in einen String
+            // Read the content of the file into a String
             StringBuilder contentBuilder = new StringBuilder();
             try (BufferedReader br = new BufferedReader(new FileReader(file))) {
                 String line;
@@ -75,13 +75,13 @@ public class Utils {
             }
             String content = contentBuilder.toString();
 
-            // Überprüft, ob die Datei ein Wörterbuch enthält (durch die Trennzeile "---")
+            // Check if the file contains a dictionary (identified by the separator "---")
             int separatorIndex = content.indexOf("---\n");
             if (separatorIndex == -1) {
                 return false;
             }
 
-            // Überprüft, ob der Text nach dem Trennzeichen komprimierte Zeichen enthält
+            // Check if the text after the separator contains compressed codes
             String compressedSection = content.substring(separatorIndex + 4);
             Pattern pattern = Pattern.compile("%\\d+");
             Matcher matcher = pattern.matcher(compressedSection);
@@ -89,10 +89,8 @@ public class Utils {
 
             return found;
         } catch (Exception e) {
-            // Wenn die Datei nicht gelesen werden kann, geben wir false zurück
+            // If the file can't be read, we return false
             return false;
         }
     }
-    
-
 }
