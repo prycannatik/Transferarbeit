@@ -1,7 +1,11 @@
 package com.transferarbeit;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,16 +45,20 @@ public class Utils {
             }
         }
     
+        // Sort codes by length to avoid partial overlap issues
+        List<String> sortedKeys = new ArrayList<>(dictionary.keySet());
+        Collections.sort(sortedKeys, Comparator.comparingInt(String::length).reversed());
+    
         // Replace compressed codes with corresponding words
-        for (Map.Entry<String, String> entry : dictionary.entrySet()) {
-            String code = entry.getKey();
-            String word = entry.getValue();
-            contentSection = contentSection.replaceAll(Pattern.quote(code), word);
+        for (String code : sortedKeys) {
+            String word = dictionary.get(code);
+            contentSection = contentSection.replace(code, word);
         }
     
         return contentSection;
-    }  
+    }
     
+
     public static boolean isCompressed(File file) {
         return file.getName().contains("compressed");
     }
