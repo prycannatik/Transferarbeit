@@ -1,6 +1,8 @@
 package com.transferarbeit;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -9,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class Utils {
 
@@ -60,7 +64,35 @@ public class Utils {
     
 
     public static boolean isCompressed(File file) {
-        return file.getName().contains("compressed");
+        try {
+            // Liest den Inhalt der Datei in einen String
+            StringBuilder contentBuilder = new StringBuilder();
+            try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    contentBuilder.append(line).append("\n");
+                }
+            }
+            String content = contentBuilder.toString();
+
+            // Überprüft, ob die Datei ein Wörterbuch enthält (durch die Trennzeile "---")
+            int separatorIndex = content.indexOf("---\n");
+            if (separatorIndex == -1) {
+                return false;
+            }
+
+            // Überprüft, ob der Text nach dem Trennzeichen komprimierte Zeichen enthält
+            String compressedSection = content.substring(separatorIndex + 4);
+            Pattern pattern = Pattern.compile("%\\d+");
+            Matcher matcher = pattern.matcher(compressedSection);
+            boolean found = matcher.find();
+
+            return found;
+        } catch (Exception e) {
+            // Wenn die Datei nicht gelesen werden kann, geben wir false zurück
+            return false;
+        }
     }
+    
 
 }
