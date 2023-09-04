@@ -42,25 +42,30 @@ public class GUIController {
     private Map<String, String> dictionary;
 
     @FXML
-    public void btnChooseFileAction(ActionEvent event) {
-        // Create a file chooser dialog
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Wählen Sie eine Datei aus");
-        selectedFile = fileChooser.showOpenDialog(null);
+public void btnChooseFileAction(ActionEvent event) {
+    // Create a file chooser dialog
+    FileChooser fileChooser = new FileChooser();
+    fileChooser.setTitle("Wählen Sie eine Datei aus");
+    
+    // Hier wird der Dateitypenfilter hinzugefügt
+    FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("Textdateien (*.txt)", "*.txt");
+    fileChooser.getExtensionFilters().add(extFilter);
 
-        // Update UI
-        if (selectedFile != null) {
-            updateSelectedFile(selectedFile.getName());
-            updateStatusText("Datei ausgewählt: " + selectedFile.getName());
+    selectedFile = fileChooser.showOpenDialog(null);
 
-            // Check if the file is compressed and update buttons accordingly
-            boolean isCompressed = CompressionService.isCompressed(selectedFile);
-            compressButton.setDisable(isCompressed);
-            decompressButton.setDisable(!isCompressed);
-        } else {
-            updateStatusText("Keine Datei ausgewählt.");
-        }
+    // Update UI
+    if (selectedFile != null) {
+        updateSelectedFile(selectedFile.getName());
+        updateStatusText("Datei ausgewählt: " + selectedFile.getName());
+
+        // Check if the file is compressed and update buttons accordingly
+        boolean isCompressed = CompressionService.isCompressed(selectedFile);
+        compressButton.setDisable(isCompressed);
+        decompressButton.setDisable(!isCompressed);
+    } else {
+        updateStatusText("Keine Datei ausgewählt.");
     }
+}
 
     @FXML
     public void btnCompressAction(ActionEvent event) {
